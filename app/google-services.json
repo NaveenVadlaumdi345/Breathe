@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "90919000045",
+    "project_id": "breathe-ad9bd",
+    "storage_bucket": "breathe-ad9bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90919000045:android:68e6ca71b6d6ac64ecb9e4",
+        "android_client_info": {
+          "package_name": "uk.ac.tees.mad.breathe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCItCEgK9uxXjuvHstvlocmz3a-MxzsXHo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
