@@ -1,4 +1,4 @@
-package uk.ac.tees.mad.breathe.ui.theme.presentation
+package uk.ac.tees.mad.breathe.ui.presentation
 
 import android.util.Log
 import androidx.compose.animation.core.*
@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -42,7 +43,6 @@ import uk.ac.tees.mad.breathe.R
 fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
     val scale = remember { Animatable(0.7f) }
     val alpha = remember { Animatable(0f) }
-    var quote by remember { mutableStateOf<String?>(null) }
     var loadingQuote by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -56,14 +56,9 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
             alpha.animateTo(targetValue = 1f, animationSpec = tween(900))
         }
 
-        // fetch quote (non-blocking)
-        launch {
-            quote = fetchZenQuoteSafely()
-            loadingQuote = false
-        }
 
         // wait a bit to show the animation and quote
-        kotlinx.coroutines.delay(onFinishDelayMs)
+        delay(onFinishDelayMs)
 
         // check Firebase auth
         //val user = FirebaseAuth.getInstance().currentUser
@@ -107,7 +102,7 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
                 CircularProgressIndicator(modifier = Modifier.size(36.dp))
             } else {
                 Text(
-                    text = quote ?: "Breathe. Be present.",
+                    text = "Breathe. Be present.",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -116,28 +111,5 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
                 )
             }
         }
-    }
-}
-
-suspend fun fetchZenQuoteSafely(): String? {
-    return try {
-        withContext(Dispatchers.IO) {
-            val client = OkHttpClient()
-            val request = Request.Builder()
-                .url("https://zenquotes.io/api/random")
-                .build()
-            client.newCall(request).execute().use { resp ->
-                if (!resp.isSuccessful) return@withContext null
-                val body = resp.body?.string() ?: return@withContext null
-                val arr = JSONArray(body)
-                val obj = arr.getJSONObject(0)
-                val q = obj.optString("q")
-                val a = obj.optString("a")
-                "$q — $a"
-            }
-        }
-    } catch (e: Exception) {
-        Log.w("Splash", "quote fetch failed", e)
-        null
     }
 }
