@@ -16,8 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BreatheTheme {
-                val navController = rememberNavController()
-                SplashScreen(navController)
+
             }
         }
     }

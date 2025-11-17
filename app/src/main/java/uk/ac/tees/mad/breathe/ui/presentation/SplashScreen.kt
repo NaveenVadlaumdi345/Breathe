@@ -29,6 +29,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import uk.ac.tees.mad.breathe.AuthState
+import uk.ac.tees.mad.breathe.MainViewModel
 import uk.ac.tees.mad.breathe.R
 
 /**
@@ -40,10 +42,11 @@ import uk.ac.tees.mad.breathe.R
  * Replace route names "home" and "auth" with your actual nav route constants.
  */
 @Composable
-fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
+fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L, viewModel: MainViewModel) {
     val scale = remember { Animatable(0.7f) }
     val alpha = remember { Animatable(0f) }
     var loadingQuote by remember { mutableStateOf(true) }
+    val user = viewModel.authState.collectAsState()
 
     LaunchedEffect(Unit) {
         launch {
@@ -60,17 +63,16 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
         // wait a bit to show the animation and quote
         delay(onFinishDelayMs)
 
-        // check Firebase auth
-        //val user = FirebaseAuth.getInstance().currentUser
-//        if (user != null) {
-//            navController.navigate("home") {
-//                popUpTo("splash") { inclusive = true }
-//            }
-//        } else {
-//            navController.navigate("auth") {
-//                popUpTo("splash") { inclusive = true }
-//            }
-//        }
+
+        if (user.value is AuthState.Success){
+            navController.navigate("home") {
+                popUpTo("splash") { inclusive = true }
+            }
+        } else {
+            navController.navigate("auth") {
+                popUpTo("splash") { inclusive = true }
+            }
+        }
     }
 
     Box(
@@ -98,9 +100,7 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            if (loadingQuote) {
-                CircularProgressIndicator(modifier = Modifier.size(36.dp))
-            } else {
+
                 Text(
                     text = "Breathe. Be present.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -109,7 +109,6 @@ fun SplashScreen(navController: NavController, onFinishDelayMs: Long = 1600L) {
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp)
                 )
-            }
         }
     }
 }
