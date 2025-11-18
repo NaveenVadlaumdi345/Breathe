@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import uk.ac.tees.mad.breathe.ui.navigation.MainNavGraph
 import uk.ac.tees.mad.breathe.ui.theme.BreatheTheme
 import uk.ac.tees.mad.breathe.ui.presentation.SplashScreen
 
@@ -16,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BreatheTheme {
-
+                MainNavGraph()
             }
         }
     }

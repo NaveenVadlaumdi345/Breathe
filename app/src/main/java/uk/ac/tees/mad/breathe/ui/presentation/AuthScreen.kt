@@ -138,10 +138,10 @@ fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
                 Button(
                     onClick = {
                         if (isLogin) {
-                            viewModel.login(email, password)
+                            viewModel.loginUser(email, password)
                         } else {
                             if (password == confirmPassword && name.isNotBlank())
-                                viewModel.signUp(name, email, password)
+                                viewModel.signUpUser(name, email, password)
                         }
                     },
                     modifier = Modifier
@@ -155,7 +155,6 @@ fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
                 Spacer(Modifier.height(16.dp))
 
                 TextButton(onClick = {
-                    viewModel.resetState()
                     isLogin = !isLogin
                 }) {
                     Text(
