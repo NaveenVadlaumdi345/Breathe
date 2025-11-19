@@ -141,7 +141,7 @@ fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
                             viewModel.loginUser(email, password)
                         } else {
                             if (password == confirmPassword && name.isNotBlank())
-                                viewModel.signUpUser(name, email, password)
+                                viewModel.signUpUser(email, password, name)
                         }
                     },
                     modifier = Modifier

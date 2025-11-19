@@ -1,7 +1,10 @@
 package uk.ac.tees.mad.breathe
 
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,11 +17,11 @@ object HiltModule {
 
     @Provides
     @Singleton
-    fun providesAuth() : FirebaseAuth = FirebaseAuth.getInstance()
+    fun providesAuth() : FirebaseAuth = Firebase.auth
 
     @Provides
     @Singleton
-    fun providesFirestore() : FirebaseFirestore = FirebaseFirestore.getInstance()
+    fun providesFirestore() : FirebaseFirestore = Firebase.firestore
 
 
 }
