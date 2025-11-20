@@ -19,6 +19,7 @@ sealed class AuthState {
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
