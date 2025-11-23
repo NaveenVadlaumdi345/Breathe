@@ -1,9 +1,11 @@
 package uk.ac.tees.mad.breathe.repository
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import uk.ac.tees.mad.breathe.network.ZenQuotesApi
 import kotlinx.coroutines.tasks.await
+import uk.ac.tees.mad.breathe.data.model.Quote
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,8 +18,8 @@ data class UserPreferences(
 class HomeRepository @Inject constructor(
     private val api: ZenQuotesApi,
     private val auth: FirebaseAuth,
+    private val db: FirebaseDatabase
 ) {
-    // Fetch a random quote from ZenQuotes
     suspend fun fetchRandomQuote(): Result<Quote> {
         return try {
             val list = api.getRandomQuote()
@@ -29,11 +31,11 @@ class HomeRepository @Inject constructor(
                 Result.success(q)
             }
         } catch (e: Exception) {
+            Log.d("HomeRepository", "Exception: $e")
             Result.failure(e)
         }
     }
 
-    // Read preferences from Realtime Database at /users/{uid}/preferences
     suspend fun getPreferences(): Result<UserPreferences> {
         val user = auth.currentUser ?: return Result.success(UserPreferences())
         return try {
@@ -47,7 +49,6 @@ class HomeRepository @Inject constructor(
         }
     }
 
-    // Update preferences at /users/{uid}/preferences
     suspend fun savePreferences(prefs: UserPreferences): Result<Unit> {
         val user = auth.currentUser ?: return Result.failure(Exception("Not logged in"))
         return try {

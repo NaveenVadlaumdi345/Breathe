@@ -2,7 +2,6 @@ package uk.ac.tees.mad.breathe.network
 
 import retrofit2.http.GET
 
-// ZenQuotes returns an array like: [{"q":"quote text","a":"author","h":"<blockquote>"}]
 data class ZenQuoteResponse(
     val q: String?,
     val a: String?,
@@ -10,6 +9,6 @@ data class ZenQuoteResponse(
 )
 
 interface ZenQuotesApi {
-    @GET("random")
+    @GET("api/random")
     suspend fun getRandomQuote(): List<ZenQuoteResponse>
 }

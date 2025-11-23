@@ -31,7 +31,7 @@ fun MainNavGraph(){
             )
         }
         composable(MainnavItems.Home.x) {
-            HomeScreen(navController)
+            HomeScreen(navController, viewModel)
         }
         }
 }
