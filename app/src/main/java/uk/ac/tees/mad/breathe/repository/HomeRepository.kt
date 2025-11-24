@@ -14,7 +14,6 @@ data class UserPreferences(
     val defaultDurationMinutes: Int = 3
 )
 
-@Singleton
 class HomeRepository @Inject constructor(
     private val api: ZenQuotesApi,
     private val auth: FirebaseAuth,

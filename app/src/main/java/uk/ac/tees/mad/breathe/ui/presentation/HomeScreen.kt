@@ -3,127 +3,123 @@ package uk.ac.tees.mad.breathe.ui.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Divider
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import uk.ac.tees.mad.breathe.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import uk.ac.tees.mad.breathe.MainViewModel
+import uk.ac.tees.mad.breathe.R
+import uk.ac.tees.mad.breathe.ui.navigation.MainnavItems
 
 @Composable
-fun HomeScreen(navController: NavController, vm: MainViewModel) {
+fun HomeScreen(navController: NavController, vm: MainViewModel = hiltViewModel()) {
     val state by vm.ui.collectAsState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-        ) {
-            // Header + Quote card
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Good day", style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    ))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = state.quote?.text ?: "Take a moment - inhale, exhale.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "- ${state.quote?.author ?: "Breathe"}",
-                        style = MaterialTheme.typography.bodySmall)
-                }
-
-                // refresh icon
-                IconButton(onClick = { vm.refreshAll() }) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = "Refresh")
-                }
+        if (state.isLoading && state.quote == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Preferences card
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                modifier = Modifier.fillMaxWidth()
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .padding(20.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("Ambient noise detection", modifier = Modifier.weight(1f))
-                        Switch(
-                            checked = state.prefs.ambientNoiseDetection,
-                            onCheckedChange = { enabled -> vm.toggleAmbient(enabled) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Good day 🌿",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = state.quote?.text ?: "Take a deep breath and relax.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "- ${state.quote?.author ?: "Breathe"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("Default duration", modifier = Modifier.weight(1f))
-                        DurationPicker(selected = state.prefs.defaultDurationMinutes, onSelect = { minutes ->
-                            vm.setDefaultDuration(minutes)
-                        })
+
+                    IconButton(onClick = { vm.refreshAll() }) {
+                        Icon(Icons.Rounded.Refresh, contentDescription = "Refresh quote")
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Text("Exercises", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Buttons for durations
-            val durations = listOf(1, 3, 5, 10)
-            FlowRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                durations.forEach { d ->
-                    ExerciseCard(duration = d, onClick = {
-                        navController.navigate("session/$d")
-                    })
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Default Duration",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        DurationPicker(
+                            selected = state.prefs.defaultDurationMinutes,
+                            onSelect = { minutes -> vm.setDefaultDuration(minutes) }
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Loading / error
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = {
+                    navController.navigate(MainnavItems.Session.x.replace("{duration}", state.prefs.defaultDurationMinutes.toString()))
+                }, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text("Start")
                 }
-            } else if (state.error != null) {
-                Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    "Exercises",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val durations = listOf(1, 3, 5, 10)
+                FlowRow(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally)
+                ) {
+                    durations.forEach { d ->
+                        ExerciseCard(duration = d) {
+                            navController.navigate(
+                                MainnavItems.Session.x.replace("{duration}", d.toString())
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
             }
         }
     }
@@ -135,16 +131,24 @@ private fun ExerciseCard(duration: Int, onClick: () -> Unit) {
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .width(150.dp)
-            .height(110.dp)
-            .clickable { onClick() }
+            .height(120.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("${duration} min", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth(),
+            Text(
+                "${duration} min",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
@@ -156,20 +160,26 @@ private fun ExerciseCard(duration: Int, onClick: () -> Unit) {
 
 @Composable
 private fun DurationPicker(selected: Int, onSelect: (Int) -> Unit) {
-    Row {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         val options = listOf(1, 3, 5, 10)
         options.forEach { minutes ->
-            val selectedBg = if (minutes == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-            val selectedText = if (minutes == selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            val isSelected = minutes == selected
             Box(
                 modifier = Modifier
-                    .padding(start = 6.dp)
-                    .size(width = 56.dp, height = 32.dp)
-                    .background(selectedBg, RoundedCornerShape(8.dp))
-                    .clickable { onSelect(minutes) },
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant,
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable { onSelect(minutes) }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("$minutes", color = selectedText)
+                Text(
+                    "$minutes min",
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

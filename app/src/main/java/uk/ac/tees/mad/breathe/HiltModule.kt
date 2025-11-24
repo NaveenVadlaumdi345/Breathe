@@ -14,9 +14,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.ktor.http.ContentType.Application.Json
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import uk.ac.tees.mad.breathe.data.local.AppDatabase
@@ -28,7 +25,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object HiltModule {
 
-    val base_URL = "https://api.assemblyai.com/v2/"
+    private const val ZEN_QUOTES_BASE_URL = "https://zenquotes.io/"
 
     @Provides
     @Singleton
@@ -40,19 +37,12 @@ object HiltModule {
 
     @Provides
     @Singleton
-    fun provideOkHttp(): OkHttpClient = OkHttpClient.Builder()
-        .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-        .build()
-
-    @Provides
-    @Singleton
-    fun provideRetrofit(client: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://zenquotes.io/")
-            .client(client)
+    fun provideZenQuotesRetrofit(): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(ZEN_QUOTES_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(Gson()))
             .build()
-    }
+
 
     @Provides
     @Singleton
@@ -61,14 +51,13 @@ object HiltModule {
 
     @Provides
     @Singleton
-    fun providesAuth() : FirebaseAuth = Firebase.auth
+    fun providesAuth(): FirebaseAuth = Firebase.auth
 
     @Provides
     @Singleton
-    fun providesFirestore() : FirebaseFirestore = Firebase.firestore
+    fun providesFirestore(): FirebaseFirestore = Firebase.firestore
 
     @Provides
     @Singleton
     fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
-
 }
