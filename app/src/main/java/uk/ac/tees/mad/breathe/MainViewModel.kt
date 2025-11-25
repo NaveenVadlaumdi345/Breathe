@@ -2,9 +2,6 @@ package uk.ac.tees.mad.breathe
 
 import android.Manifest
 import android.content.Context
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -29,8 +26,6 @@ import uk.ac.tees.mad.breathe.repository.HomeRepository
 import uk.ac.tees.mad.breathe.repository.SessionRepository
 import uk.ac.tees.mad.breathe.repository.UserPreferences
 import javax.inject.Inject
-import kotlin.math.log10
-import kotlin.math.sqrt
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -47,8 +42,7 @@ data class HomeUiState(
 data class SessionUiState(
     val elapsedSeconds: Int = 0,
     val isPaused: Boolean = false,
-    val isRunning: Boolean = false,
-    val noiseLevel: Float = 0f
+    val isRunning: Boolean = false
 )
 
 @HiltViewModel
@@ -170,10 +164,7 @@ class MainViewModel @Inject constructor(
     }
 
     private var durationMinutes: Int = 1
-    private var startTime: Long = 0L
     private var totalSeconds: Int = 0
-    private var audioRecord: AudioRecord? = null
-    private val noiseLevels = mutableListOf<Float>()
 
     private val _state = MutableStateFlow(SessionUiState())
     val state: StateFlow<SessionUiState> = _state.asStateFlow()
@@ -181,9 +172,7 @@ class MainViewModel @Inject constructor(
     fun startSession(duration: Int, vibrator: Vibrator) {
         durationMinutes = duration
         totalSeconds = duration * 60
-        startTime = System.currentTimeMillis()
-        noiseLevels.clear()
-        _state.update { it.copy(isRunning = true, isPaused = false, elapsedSeconds = 0, noiseLevel = 0f) }
+        _state.update { it.copy(isRunning = true, isPaused = false, elapsedSeconds = 0) }
 
         // Breathing guidance loop
         viewModelScope.launch {
@@ -193,10 +182,10 @@ class MainViewModel @Inject constructor(
                     continue
                 }
                 vibratePattern(vibrator, inhale = true)
-                delay(4000) // Inhale duration
+                delay(4000) // Inhale during vibration
                 delay(4000) // Hold
                 vibratePattern(vibrator, inhale = false)
-                delay(4000) // Exhale duration
+                delay(4000) // Exhale during vibration
                 delay(4000) // Hold
             }
             finalizeSession()
@@ -207,26 +196,8 @@ class MainViewModel @Inject constructor(
             while (_state.value.isRunning && _state.value.elapsedSeconds < totalSeconds) {
                 delay(1000)
                 if (!_state.value.isPaused) {
-                    val elapsed = ((System.currentTimeMillis() - startTime) / 1000).toInt()
-                    _state.update { it.copy(elapsedSeconds = elapsed) }
+                    _state.update { it.copy(elapsedSeconds = it.elapsedSeconds + 1) }
                 }
-            }
-        }
-
-        if (_ui.value.prefs.ambientNoiseDetection) {
-            viewModelScope.launch {
-                while (_state.value.isRunning && _state.value.elapsedSeconds < totalSeconds) {
-                    if (_state.value.isPaused) {
-                        delay(1000)
-                        continue
-                    }
-                    val noise = calculateNoiseLevel()
-                    if (noise != 0.0) {
-                        noiseLevels.add(noise.toFloat())
-                        _state.update { it.copy(noiseLevel = noise.toFloat()) }
-                    }
-                }
-                releaseAudioRecord()
             }
         }
     }
@@ -243,55 +214,19 @@ class MainViewModel @Inject constructor(
 
     fun stopSession() {
         _state.update { it.copy(isRunning = false) }
-        releaseAudioRecord()
     }
 
     private suspend fun finalizeSession() {
         _state.update { it.copy(isRunning = false) }
-        val averageNoise = if (noiseLevels.isNotEmpty()) noiseLevels.average().toFloat() else 0f
         if (_state.value.elapsedSeconds >= totalSeconds) {
             sessionRepository.saveSession(
                 Session(
                     duration = durationMinutes,
                     timestamp = System.currentTimeMillis(),
-                    averageNoiseLevel = averageNoise,
+                    averageNoiseLevel = 0f,
                     completed = true
                 )
             )
         }
-    }
-
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun initAudioRecord() {
-        val sampleRate = 16000
-        val channel = AudioFormat.CHANNEL_IN_MONO
-        val encoding = AudioFormat.ENCODING_PCM_16BIT
-        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channel, encoding) * 2
-        audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channel, encoding, bufferSize)
-        audioRecord?.startRecording()
-    }
-
-    private fun calculateNoiseLevel(): Double {
-        val sampleRate = 16000
-        val bytesPerSecond = sampleRate * 2 // 16-bit mono
-        val buffer = ByteArray(bytesPerSecond) // 1 second of audio
-        val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-        if (read <= 0) return 0.0
-
-        var sum = 0.0
-        var i = 0
-        while (i < read) {
-            val sample = ((buffer[i + 1].toInt() shl 8) or (buffer[i].toInt() and 0xFF)).toDouble()
-            sum += sample * sample
-            i += 2
-        }
-        val rms = sqrt(sum / (read / 2))
-        return 20 * log10(rms / 32767)
-    }
-
-    private fun releaseAudioRecord() {
-        audioRecord?.stop()
-        audioRecord?.release()
-        audioRecord = null
     }
 }
