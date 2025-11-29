@@ -1,6 +1,7 @@
 package uk.ac.tees.mad.breathe.ui.presentation
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -37,12 +38,23 @@ fun ProfileScreen(
 ) {
     val state by vm.ui.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
         onResult = { bitmap ->
             bitmap?.let { vm.uploadProfileImage(it, context) }
+        }
+    )
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                cameraLauncher.launch(null)
+            } else {
+                Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
         }
     )
 
@@ -143,7 +155,7 @@ fun ProfileScreen(
                     text = { Text("Choose an option to update your profile picture.") },
                     confirmButton = {
                         TextButton(onClick = {
-                            cameraLauncher.launch(null)
+                            permissionLauncher.launch(android.Manifest.permission.CAMERA)
                             vm.showPickerDialog = false
                         }) {
                             Text("Camera")
