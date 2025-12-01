@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.breathe.data.local.SessionDao
 import uk.ac.tees.mad.breathe.data.model.Session
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
 
@@ -46,38 +48,36 @@ class SessionHistoryViewModel @Inject constructor(
 
     fun clearAll() {
         viewModelScope.launch {
-            sessionDao.getAll().forEach {
-                // For now we just delete all (optional: create deleteAll DAO)
-                sessionDao.insert(it.copy(completed = false))
-            }
-            _state.value = _state.value.copy(sessions = emptyList())
+            sessionDao.clearAll()
+            _state.value = _state.value.copy(sessions = emptyList(), weeklyCount = 0, monthlyCount = 0)
         }
     }
 
     private fun calculateWeeklyStreak(sessions: List<Session>): Int {
         val cal = Calendar.getInstance()
         val currentWeek = cal.get(Calendar.WEEK_OF_YEAR)
+        val currentYear = cal.get(Calendar.YEAR)
         return sessions.count {
-            val sessionWeek = Calendar.getInstance().apply {
-                timeInMillis = it.timestamp
-            }.get(Calendar.WEEK_OF_YEAR)
-            sessionWeek == currentWeek
+            val sessionCal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
+            sessionCal.get(Calendar.WEEK_OF_YEAR) == currentWeek &&
+                    sessionCal.get(Calendar.YEAR) == currentYear
         }
     }
 
     private fun calculateMonthlyStreak(sessions: List<Session>): Int {
         val cal = Calendar.getInstance()
         val currentMonth = cal.get(Calendar.MONTH)
+        val currentYear = cal.get(Calendar.YEAR)
         return sessions.count {
-            val sessionMonth = Calendar.getInstance().apply {
-                timeInMillis = it.timestamp
-            }.get(Calendar.MONTH)
-            sessionMonth == currentMonth
+            val sessionCal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
+            sessionCal.get(Calendar.MONTH) == currentMonth &&
+                    sessionCal.get(Calendar.YEAR) == currentYear
         }
     }
 
     fun formatDate(timeMillis: Long): String {
-        val sdf = SimpleDateFormat("dd MMM yyyy • hh:mm a", Locale.getDefault())
-        return sdf.format(Date(timeMillis))
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy • hh:mm a", Locale.getDefault())
+        val instant = Instant.ofEpochMilli(timeMillis)
+        return formatter.format(instant.atZone(ZoneId.systemDefault()))
     }
 }

@@ -13,4 +13,7 @@ interface SessionDao {
 
     @Query("SELECT * FROM sessions ORDER BY timestamp DESC")
     suspend fun getAll(): List<Session>
+
+    @Query("DELETE FROM sessions")
+    suspend fun clearAll()
 }

@@ -81,7 +81,6 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // Profile Image
             Box(
                 modifier = Modifier
                     .size(140.dp)
@@ -113,7 +112,6 @@ fun ProfileScreen(
                 Text("Change Photo", color = MaterialTheme.colorScheme.primary)
             }
 
-            // Username
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { vm.onNameChange(it) },

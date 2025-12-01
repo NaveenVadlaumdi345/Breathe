@@ -10,13 +10,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.imageLoader
 import coil.request.ImageRequest
+import com.cloudinary.Cloudinary
+import com.cloudinary.utils.ObjectUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.*
 import javax.inject.Inject
 
@@ -33,6 +38,66 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadProfile()
+    }
+
+    val cloudinary = Cloudinary(
+        ObjectUtils.asMap(
+            "cloud_name", "dn8ycjojw",
+            "api_key", "281678982458183",
+            "api_secret", "77nO2JN3hkGXB-YgGZuJOqXcA4Q"
+        )
+    )
+
+    private suspend fun uploadImageToCloudinary(
+        context: Context,
+        cloudinary: Cloudinary,
+        imageBitmap: Bitmap? = null,
+        imageUri: Uri? = null
+    ): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val uploadResult: Map<*, *>
+
+                when {
+                    imageBitmap != null -> {
+                        val stream = ByteArrayOutputStream()
+                        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                        val imageBytes = stream.toByteArray()
+                        uploadResult = cloudinary.uploader().upload(imageBytes, ObjectUtils.emptyMap())
+                    }
+                    imageUri != null -> {
+                        val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
+                        uploadResult = cloudinary.uploader().upload(inputStream, ObjectUtils.emptyMap())
+                        inputStream?.close()
+                    }
+                    else -> return@withContext null
+                }
+
+                // Return secure_url from Cloudinary response
+                uploadResult["secure_url"] as? String
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    fun uploadProfileImage(imageBitmap: Bitmap, context: Context) {
+        viewModelScope.launch {
+            _ui.value = _ui.value.copy(isUploading = true)
+            val url = uploadImageToCloudinary(context, cloudinary, imageBitmap = imageBitmap)
+            url?.let { saveProfileUrl(it) }
+            _ui.value = _ui.value.copy(isUploading = false)
+        }
+    }
+
+    fun uploadProfileImageFromUri(imageUri: Uri, context: Context) {
+        viewModelScope.launch {
+            _ui.value = _ui.value.copy(isUploading = true)
+            val url = uploadImageToCloudinary(context, cloudinary, imageUri = imageUri)
+            url?.let { saveProfileUrl(it) }
+            _ui.value = _ui.value.copy(isUploading = false)
+        }
     }
 
     private fun loadProfile() {
@@ -57,42 +122,21 @@ class ProfileViewModel @Inject constructor(
                 .addOnSuccessListener {
                     _ui.value = _ui.value.copy(isSaving = false)
                 }
+                .addOnFailureListener {
+                    _ui.value = _ui.value.copy(isSaving = false)
+                    // Optionally handle error
+                }
         }
-    }
-
-    fun uploadProfileImage(bitmap: Bitmap, context: Context) {
-//        val uid = auth.currentUser?.uid ?: return
-//        val storageRef = FirebaseStorage.getInstance().reference
-//            .child("profiles/$uid-${UUID.randomUUID()}.jpg")
-//
-//        val baos = ByteArrayOutputStream()
-//        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
-//        val data = baos.toByteArray()
-//
-//        storageRef.putBytes(data).addOnSuccessListener {
-//            storageRef.downloadUrl.addOnSuccessListener { uri ->
-//                saveProfileUrl(uri.toString())
-//            }
-//        }
-    }
-
-    fun uploadProfileImageFromUri(uri: Uri, context: Context) {
-//        val uid = auth.currentUser?.uid ?: return
-//        val storageRef = FirebaseStorage.getInstance().reference
-//            .child("profiles/$uid-${UUID.randomUUID()}.jpg")
-//
-//        storageRef.putFile(uri).addOnSuccessListener {
-//            storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-//                saveProfileUrl(downloadUri.toString())
-//            }
-//        }
     }
 
     private fun saveProfileUrl(url: String) {
         val uid = auth.currentUser?.uid ?: return
         firestore.collection("users").document(uid)
             .update("profileUrl", url)
-        _ui.value = _ui.value.copy(profileUrl = url)
+            .addOnSuccessListener {
+                _ui.value = _ui.value.copy(profileUrl = url)
+            }
+        // Optionally addOnFailureListener
     }
 
     fun logout() {
@@ -103,5 +147,6 @@ class ProfileViewModel @Inject constructor(
 data class ProfileUiState(
     val name: String = "",
     val profileUrl: String? = null,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val isUploading: Boolean = false
 )

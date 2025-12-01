@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation("com.cloudinary:cloudinary-android:3.1.1")
 
     implementation("androidx.room:room-runtime:2.7.0-alpha05")
     implementation(libs.firebase.auth)
