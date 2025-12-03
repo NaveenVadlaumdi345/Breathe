@@ -25,7 +25,6 @@ import uk.ac.tees.mad.breathe.repository.UserPreferences
 import java.time.Instant
 import javax.inject.Inject
 
-// --- Auth and Home Data States ---
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -40,7 +39,6 @@ data class HomeUiState(
     val error: String? = null
 )
 
-// --- Session State ---
 data class SessionUiState(
     val elapsedSeconds: Int = 0,
     val isPaused: Boolean = false,
@@ -58,18 +56,15 @@ class MainViewModel @Inject constructor(
     private val db: FirebaseDatabase
 ) : ViewModel() {
 
-    // ---------------- AUTH ----------------
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
     private val _isLoggedIn = MutableStateFlow<Boolean?>(null)
     val isLoggedIn: StateFlow<Boolean?> = _isLoggedIn
 
-    // ---------------- HOME UI ----------------
     private val _ui = MutableStateFlow(HomeUiState(isLoading = true))
     val ui: StateFlow<HomeUiState> = _ui.asStateFlow()
 
-    // ---------------- SESSION ----------------
     private val _state = MutableStateFlow(SessionUiState())
     val state: StateFlow<SessionUiState> = _state.asStateFlow()
 
@@ -79,11 +74,24 @@ class MainViewModel @Inject constructor(
     init {
         refreshAll()
         auth.addAuthStateListener { firebaseAuth ->
-            _isLoggedIn.value = firebaseAuth.currentUser != null
+            val user = firebaseAuth.currentUser
+            if (user == null) {
+                _authState.value = AuthState.Idle
+                _isLoggedIn.value = false
+                Log.d("MainViewModel", "User logged out -> AuthState.Idle")
+            } else {
+                _authState.value = AuthState.Success(user.uid)
+                _isLoggedIn.value = true
+                Log.d("MainViewModel", "User logged in -> AuthState.Success(${user.uid})")
+            }
         }
     }
 
-    // ---------------- AUTH METHODS ----------------
+    fun logOut(){
+        auth.signOut()
+        _authState.value = AuthState.Idle
+        _isLoggedIn.value = false
+    }
 
     fun loginUser(email: String, password: String) {
         _authState.value = AuthState.Loading
@@ -116,7 +124,6 @@ class MainViewModel @Inject constructor(
             }
     }
 
-    // ---------------- HOME METHODS ----------------
 
     fun refreshAll() {
         _ui.update { it.copy(isLoading = true, error = null) }
@@ -149,7 +156,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { repository.savePreferences(newPrefs) }
     }
 
-    // ---------------- SESSION LOGIC ----------------
 
     fun prepareAndStartSession(durationMinutes: Int, vibrator: Vibrator? = null) {
         viewModelScope.launch {
@@ -171,7 +177,6 @@ class MainViewModel @Inject constructor(
                     )
                 }
 
-                // Countdown: 3..2..1
                 for (i in countdownLength downTo 1) {
                     _state.update { it.copy(countdownSeconds = i) }
                     safeVibrate(vibrator, 80)

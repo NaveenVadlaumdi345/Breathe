@@ -26,8 +26,6 @@ sealed class MainnavItems(val x: String) {
     object Auth : MainnavItems("auth")
     object Home : MainnavItems("home")
     object Session : MainnavItems("session/{duration}")
-
-    // Placeholder for future screens
     object History : MainnavItems("history")
     object Profile : MainnavItems("profile")
 }
@@ -79,13 +77,18 @@ fun MainNavGraph() {
                 )
             }
 
-        composable(MainnavItems.History.x) {
-            HistoryScreen()
-        }
+            composable(MainnavItems.History.x) {
+                HistoryScreen()
+            }
 
-        composable(MainnavItems.Profile.x) {
-            ProfileScreen()
-        }
+            composable(MainnavItems.Profile.x) {
+                ProfileScreen(onLogOut = {
+                    navController.navigate(MainnavItems.Splash.x) {
+                        popUpTo(0)
+                    }
+                }
+                )
+            }
 
         }
     }

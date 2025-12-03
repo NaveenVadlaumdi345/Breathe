@@ -1,5 +1,6 @@
 package uk.ac.tees.mad.breathe.ui.presentation
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,13 +25,13 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.breathe.AuthState
 import uk.ac.tees.mad.breathe.MainViewModel
+import uk.ac.tees.mad.breathe.ui.navigation.MainnavItems
 
 @Composable
 fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
     var isLogin by remember { mutableStateOf(true) }
 
     val authState by viewModel.authState.collectAsState()
-    val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -39,6 +40,8 @@ fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
     var showPassword by remember { mutableStateOf(false) }
 
     val colors = MaterialTheme.colorScheme
+
+    Log.d("AuthScreen", "authState: $authState")
 
     Box(
         modifier = Modifier
@@ -174,8 +177,8 @@ fun AuthScreen(navController: NavController, viewModel: MainViewModel) {
                     )
                     is AuthState.Success -> {
                         LaunchedEffect(Unit) {
-                            navController.navigate("home") {
-                                popUpTo("auth") { inclusive = true }
+                            navController.navigate(MainnavItems.Home.x) {
+                                popUpTo(0)
                             }
                         }
                     }

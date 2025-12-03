@@ -73,7 +73,6 @@ class ProfileViewModel @Inject constructor(
                     else -> return@withContext null
                 }
 
-                // Return secure_url from Cloudinary response
                 uploadResult["secure_url"] as? String
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -124,7 +123,6 @@ class ProfileViewModel @Inject constructor(
                 }
                 .addOnFailureListener {
                     _ui.value = _ui.value.copy(isSaving = false)
-                    // Optionally handle error
                 }
         }
     }
@@ -136,11 +134,6 @@ class ProfileViewModel @Inject constructor(
             .addOnSuccessListener {
                 _ui.value = _ui.value.copy(profileUrl = url)
             }
-        // Optionally addOnFailureListener
-    }
-
-    fun logout() {
-        auth.signOut()
     }
 }
 

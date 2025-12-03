@@ -28,13 +28,17 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import uk.ac.tees.mad.breathe.AuthState
+import uk.ac.tees.mad.breathe.MainViewModel
 import uk.ac.tees.mad.breathe.ProfileViewModel
 import uk.ac.tees.mad.breathe.R
 import java.util.*
 
 @Composable
 fun ProfileScreen(
-    vm: ProfileViewModel = hiltViewModel()
+    vm: ProfileViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(),
+    onLogOut : () -> Unit
 ) {
     val state by vm.ui.collectAsState()
     val context = LocalContext.current
@@ -137,7 +141,9 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
-                onClick = { vm.logout() },
+                onClick = {
+                    mainViewModel.logOut()
+                    onLogOut() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(30.dp)
             ) {

@@ -38,19 +38,16 @@ fun SessionScreen(
 
     val state by viewModel.state.collectAsState()
 
-    // Request start only once when screen shows: viewModel will perform countdown -> start
     LaunchedEffect(duration) {
         viewModel.prepareAndStartSession(duration)
     }
 
-    // Progress: when counting down, show 0; otherwise elapsed/total
     val progress = when {
         state.isCountingDown -> 0f
         duration <= 0 -> 0f
         else -> state.elapsedSeconds.toFloat() / (duration * 60f)
     }.coerceIn(0f, 1f)
 
-    // Decorative breathing pulse animation
     val scale = rememberInfiniteTransition().animateFloat(
         initialValue = 1f,
         targetValue = 1.35f,
@@ -69,7 +66,6 @@ fun SessionScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize().padding(16.dp)
         ) {
-            // Pulse circle
             Box(
                 modifier = Modifier
                     .size(200.dp)
@@ -79,7 +75,6 @@ fun SessionScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // If counting down, show start timestamp + countdown
             if (state.isCountingDown) {
                 val startInstant = state.scheduledStartMillis?.let { Instant.ofEpochMilli(it) }
                 val fmt = DateTimeFormatter.ofPattern("dd MMM yyyy • HH:mm:ss", Locale.getDefault())
@@ -96,7 +91,6 @@ fun SessionScreen(
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
                 )
             } else {
-                // Running or idle UI
                 Text(
                     text = "Breathe",
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
