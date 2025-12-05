@@ -42,9 +42,9 @@ class ProfileViewModel @Inject constructor(
 
     val cloudinary = Cloudinary(
         ObjectUtils.asMap(
-            "cloud_name", "dn8ycjojw",
-            "api_key", "281678982458183",
-            "api_secret", "77nO2JN3hkGXB-YgGZuJOqXcA4Q"
+            "cloud_name", "dniikvkwm",
+            "api_key", "176186297167313",
+            "api_secret", "emV4QMx5s1APAI8TwnVenJ0F6M4"
         )
     )
 

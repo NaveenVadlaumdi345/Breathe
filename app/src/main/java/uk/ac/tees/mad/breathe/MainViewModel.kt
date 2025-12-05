@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,8 @@ class MainViewModel @Inject constructor(
     private val repository: HomeRepository,
     private val sessionRepository: SessionRepository,
     private val auth: FirebaseAuth,
-    private val db: FirebaseDatabase
+    private val db: FirebaseDatabase,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -111,7 +113,7 @@ class MainViewModel @Inject constructor(
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: return@addOnSuccessListener
                 val newUser = User(uid = uid, email = email, name = name)
-                db.getReference("users").child(uid).setValue(newUser)
+                firestore.collection("users").document(uid).set(newUser)
                     .addOnSuccessListener {
                         _authState.value = AuthState.Success(uid)
                     }
